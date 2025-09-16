@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="hexapod_robot">
+
+<xacro:property name="r" value="0.075" />
+<xacro:property name="h" value="0.055" />
+
+<xacro:property name="d" value="2710.0" />
+
+
+<!-- Masses -->
+<xacro:property name="m1" value="${r*h*d}" />
+
+<!-- Moments of inertia for the robot body -->
+<xacro:property name="Ix_body" value="${(1/2)*m1*(3*r*r+h*h)}" />
+<xacro:property name="Iy_body" value="${(1/2)*m1*(3*r*r+h*h)}" />
+<xacro:property name="Iz_body" value="${(1/2)*m1*r*r}" />
+
+<xacro:macro name="inertia_body">
+    <inertial>
+        <origin rpy="0 0 0" xyz="0 0 0.0495" />
+        <mass value="${m1}"/>
+        <inertia ixx="${Ix_body}" ixy="0.0" ixz="0.0" iyy="${Iy_body}" iyz="0.0" izz="${Iz_body}"/>
+    </inertial>
+</xacro:macro>
+
+<link name="base_footprint" />
+
+<joint name="body_link_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="body_link"/>
+</joint>
+
+<link name="body_link">
+    <visual>
+        <geometry>
+            <cylinder radius="${r}" length="${h}"/>
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0.0495"/>
+    </visual>
+
+    <collision>
+        <geometry>
+            <cylinder radius="${r}" length="${h}"/>
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0.0495"/>
+    </collision>
+
+    <xacro:inertia_body />
+</link>
+
+</robot>
