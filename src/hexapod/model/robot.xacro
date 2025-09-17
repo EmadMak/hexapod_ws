@@ -89,6 +89,95 @@
     <xacro:inertia_body />
 </link>
 
+<xacro:macro name="leg" params="name hip_angle direction"> 
+
+    <joint name="${name}_hip_joint" type="revolute">
+        <parent link="body_link"/>
+        <child link="${name}_hip_link"/>
+        <origin xyz="${cos(hip_angle)*r} ${sin(hip_angle)*r} 0.0495" rpy="0 0 ${hip_angle}"/>
+        <axis xyz="0 0 ${direction * 1}"/>
+        <limit lower="-1.5" upper="1.5" effort="50000" velocity="4"/>
+        <dynamics damping="1.0" friction="1.0"/>
+    </joint>
+
+    <link name="${name}_hip_link">
+        <visual>
+            <geometry>
+                <sphere radius="${r_hip}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <sphere radius="${r_hip}"/>
+            </geometry>
+        </collision>
+
+        <xacro:inertia_hip/>
+    </link>
+
+    <joint name="${name}_femur_joint" type="revolute">
+        <parent link="${name}_hip_link"/>
+        <child link="${name}_femur_link"/>
+        <origin xyz="0 0 0" rpy="0 ${-radians(20)} 0"/>
+        <axis xyz="0 -1 0"/>
+        <limit lower="-1.5" upper="1.5" effort="50000" velocity="4"/>
+        <dynamics damping="1.0" friction="1.0"/>
+    </joint>
+
+    <link name="${name}_femur_link">
+        <visual>
+            <origin xyz="${((l_femur/2)+(r_hip))} 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="${l_femur} ${th} ${w}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="${((l_femur/2)+(r_hip))} 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="${l_femur} ${th} ${w}"/>
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="${name}_tibia_joint" type="revolute">
+        <parent link="${name}_femur_link"/>
+        <child link="${name}_tibia_link"/>
+        <origin xyz="${(r_hip+l_femur)} 0 0" rpy="0 ${direction * pi/2} 0"/>
+        <axis xyz="0 -1 0"/>
+        <limit lower="-1.5" upper="1.5" effort="50000" velocity="4"/>
+        <dynamics damping="1.0" friction="1.0"/>
+    </joint>
+
+    <link name="${name}_tibia_link">
+        <visual>
+            <origin xyz="${direction * l_tibia/2} 0 0"/>
+            <geometry>
+                <box size="${l_tibia} ${th} ${w}"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="${direction * l_tibia/2} 0 0"/>
+            <geometry>
+                <box size="${l_tibia} ${th} ${w}"/>
+            </geometry>
+        </collision>
+    </link>
+
+</xacro:macro>
+
+<xacro:leg name="rm" hip_angle="0" direction="1"/>
+
+<xacro:leg name="ru" hip_angle="${radians(45)}" direction="1"/>
+
+<xacro:leg name="lu" hip_angle="${radians(135)}" direction="-1"/>
+
+<xacro:leg name="lm" hip_angle="${radians(180)}" direction="-1"/>
+
+<xacro:leg name="ld" hip_angle="${radians(225)}" direction="-1"/>
+
+<xacro:leg name="rd" hip_angle="${radians(315)}" direction="1"/>
+
+<!--
 <joint name="lm_hip_joint" type="revolute">
     <parent link="body_link"/>
     <child link="lm_hip_link"/>
@@ -160,5 +249,6 @@
         </geometry>
     </collision>
 </link>
+-->
 
 </robot>
