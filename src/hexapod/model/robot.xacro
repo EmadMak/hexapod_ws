@@ -23,46 +23,22 @@
 <xacro:property name="m4" value="${d*th*w*l_tibia}" />
 
 <!-- Moments of inertia for the robot body -->
-<xacro:property name="Ix_body" value="${(1/2)*m1*(3*r*r+h*h)}" />
-<xacro:property name="Iy_body" value="${(1/2)*m1*(3*r*r+h*h)}" />
-<xacro:property name="Iz_body" value="${(1/2)*m1*r*r}" />
+<xacro:property name="Ix_body" value="${(1/12)*m1*(3*r*r+h*h)}" />
+<xacro:property name="Iy_body" value="${(1/12)*m1*(3*r*r+h*h)}" />
+<xacro:property name="Iz_body" value="${(1/12)*m1*r*r}" />
 
 <!-- Moments of inertia for robot hip yaw joint -->
 <xacro:property name="I_hip" value="${(2/5)*m2*(r_hip*r_hip)}" />
 
 <!-- Moments of inertia for robot femur -->
-<xacro:property name="Ix_femur" value="${(1/2)*m3*(w*w+th*th)}" />
-<xacro:property name="Iy_femur" value="${(1/2)*m3*(l_femur*l_femur+w*w)}" />
-<xacro:property name="Iz_femur" value="${(1/2)*m3*(l_femur*l_femur+th*th)}" />
+<xacro:property name="Ix_femur" value="${(1/12)*m3*(w*w+th*th)}" />
+<xacro:property name="Iy_femur" value="${(1/12)*m3*(l_femur*l_femur+w*w)}" />
+<xacro:property name="Iz_femur" value="${(1/12)*m3*(l_femur*l_femur+th*th)}" />
 
 <!-- Moments of inertia for robot tibia -->
-<xacro:property name="Ix_thigh" value="${(1/2)*m3*(w*w+th*th)}" />
-<xacro:property name="Iy_thigh" value="${(1/2)*m3*(l_tibia*l_femur+w*w)}" />
-<xacro:property name="Iz_thigh" value="${(1/2)*m3*(l_tibia*l_femur+th*th)}" />
-
-<xacro:macro name="inertia_body">
-    <inertial>
-        <origin rpy="0 0 0" xyz="0 0 0.0495" />
-        <mass value="${m1}"/>
-        <inertia ixx="${Ix_body}" ixy="0.0" ixz="0.0" iyy="${Iy_body}" iyz="0.0" izz="${Iz_body}"/>
-    </inertial>
-</xacro:macro>
-
-<xacro:macro name="inertia_hip">
-    <inertial>
-        <origin rpy="0 0 0" xyz="0 0 0"/>
-        <mass value="${m2}"/>
-        <inertia ixx="${I_hip}" ixy="0.0" ixz="0.0" iyy="${I_hip}" iyz="0.0" izz="${I_hip}"/>
-    </inertial>
-</xacro:macro>
-
-<xacro:macro name="inertia_femur">
-    <inertial>
-        <origin rpy="0 0 0" xyz="0 0 0" />
-        <mass value="${m1}"/>
-        <inertia ixx="${Ix_femur}" ixy="0.0" ixz="0.0" iyy="${Iy_femur}" iyz="0.0" izz="${Iz_femur}"/>
-    </inertial>
-</xacro:macro>
+<xacro:property name="Ix_tibia" value="${(1/12)*m3*(w*w+th*th)}" />
+<xacro:property name="Iy_tibia" value="${(1/12)*m3*(l_tibia*l_femur+w*w)}" />
+<xacro:property name="Iz_tibia" value="${(1/12)*m3*(l_tibia*l_femur+th*th)}" />
 
 <link name="base_footprint" />
 
@@ -86,7 +62,11 @@
         <origin rpy="0 0 0" xyz="0 0 0.0495"/>
     </collision>
 
-    <xacro:inertia_body />
+    <inertial>
+        <origin rpy="0 0 0" xyz="0 0 0.0495" />
+        <mass value="${m1}"/>
+        <inertia ixx="${Ix_body}" ixy="0.0" ixz="0.0" iyy="${Iy_body}" iyz="0.0" izz="${Iz_body}"/>
+    </inertial>
 </link>
 
 <xacro:macro name="leg" params="name hip_angle direction"> 
@@ -111,8 +91,10 @@
                 <sphere radius="${r_hip}"/>
             </geometry>
         </collision>
-
-        <xacro:inertia_hip/>
+        <inertial>
+            <mass value="${m2}"/>
+            <inertia ixx="${I_hip}" ixy="0.0" ixz="0.0" iyy="${I_hip}" iyz="0.0" izz="${I_hip}"/>
+        </inertial>
     </link>
 
     <joint name="${name}_femur_joint" type="revolute">
@@ -137,6 +119,10 @@
                 <box size="${l_femur} ${th} ${w}"/>
             </geometry>
         </collision>
+        <inertial>
+            <mass value="${m1}"/>
+            <inertia ixx="${Ix_femur}" ixy="0.0" ixz="0.0" iyy="${Iy_femur}" iyz="0.0" izz="${Iz_femur}"/>
+        </inertial>
     </link>
 
     <joint name="${name}_tibia_joint" type="revolute">
@@ -161,94 +147,19 @@
                 <box size="${l_tibia} ${th} ${w}"/>
             </geometry>
         </collision>
+        <inertial>
+            <mass value="${m1}"/>
+            <inertia ixx="${Ix_tibia}" ixy="0.0" ixz="0.0" iyy="${Iy_tibia}" iyz="0.0" izz="${Iz_tibia}"/>
+        </inertial>
     </link>
 
 </xacro:macro>
 
 <xacro:leg name="rm" hip_angle="0" direction="1"/>
-
 <xacro:leg name="ru" hip_angle="${radians(45)}" direction="1"/>
-
 <xacro:leg name="lu" hip_angle="${radians(135)}" direction="-1"/>
-
 <xacro:leg name="lm" hip_angle="${radians(180)}" direction="-1"/>
-
 <xacro:leg name="ld" hip_angle="${radians(225)}" direction="-1"/>
-
 <xacro:leg name="rd" hip_angle="${radians(315)}" direction="1"/>
-
-<!--
-<joint name="lm_hip_joint" type="revolute">
-    <parent link="body_link"/>
-    <child link="lm_hip_link"/>
-    <origin xyz="${-r} 0 ${0.0495}"/>
-    <axis xyz="0 0 1"/>
-    <limit lower="-1.5" upper="1.5" effort="50000" velocity="4"/>
-    <dynamics damping="1.0" friction="1.0"/>
-</joint>
-
-<link name="lm_hip_link">
-    <visual>
-        <geometry>
-            <sphere radius="${r_hip}"/>
-        </geometry>
-    </visual>
-    <collision>
-        <geometry>
-            <sphere radius="${r_hip}"/>
-        </geometry>
-    </collision>
-
-    <xacro:inertia_hip/>
-</link>
-
-<joint name="lm_femur_joint" type="revolute">
-    <parent link="lm_hip_link"/>
-    <child link="lm_femur_link"/>
-    <origin xyz="0 0 0" rpy="0 ${radians(20)} 0"/>
-    <axis xyz="0 1 0"/>
-    <limit lower="-1.5" upper="1.5" effort="50000" velocity="4"/>
-    <dynamics damping="1.0" friction="1.0"/>
-</joint>
-
-<link name="lm_femur_link">
-    <visual>
-        <origin xyz="${(-l_femur/2)-(r_hip)} 0 0" rpy="0 0 0"/>
-        <geometry>
-            <box size="${l_femur} ${th} ${w}"/>
-        </geometry>
-    </visual>
-    <collision>
-        <origin xyz="${(-l_femur/2)-(r_hip)} 0 0" rpy="0 0 0"/>
-        <geometry>
-            <box size="${l_femur} ${th} ${w}"/>
-        </geometry>
-    </collision>
-</link>
-
-<joint name="lm_tibia_joint" type="revolute">
-    <parent link="lm_femur_link"/>
-    <child link="lm_tibia_link"/>
-    <origin xyz="${-r_hip-l_femur} 0 0" rpy="0 ${-pi/2} 0"/>
-    <axis xyz="0 -1 0"/>
-    <limit lower="-1.5" upper="1.5" effort="50000" velocity="4"/>
-    <dynamics damping="1.0" friction="1.0"/>
-</joint>
-
-<link name="lm_tibia_link">
-    <visual>
-        <origin xyz="${-l_tibia/2} 0 0"/>
-        <geometry>
-            <box size="${l_tibia} ${th} ${w}"/>
-        </geometry>
-    </visual>
-    <collision>
-        <origin xyz="${-l_tibia/2} 0 0"/>
-        <geometry>
-            <box size="${l_tibia} ${th} ${w}"/>
-        </geometry>
-    </collision>
-</link>
--->
 
 </robot>
