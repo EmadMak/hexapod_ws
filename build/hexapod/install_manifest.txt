@@ -1,3 +1,6 @@
+/home/emad/hexapod-ws/install/hexapod/share/hexapod/launch/model.launch.py
+/home/emad/hexapod-ws/install/hexapod/share/hexapod/model/robot.xacro
+/home/emad/hexapod-ws/install/hexapod/share/hexapod/rviz/config.rviz
 /home/emad/hexapod-ws/install/hexapod/share/ament_index/resource_index/package_run_dependencies/hexapod
 /home/emad/hexapod-ws/install/hexapod/share/ament_index/resource_index/parent_prefix_path/hexapod
 /home/emad/hexapod-ws/install/hexapod/share/hexapod/environment/ament_prefix_path.sh

@@ -43,6 +43,14 @@ if(NOT DEFINED CMAKE_OBJDUMP)
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/hexapod" TYPE DIRECTORY FILES
+    "/home/emad/hexapod-ws/src/hexapod/launch"
+    "/home/emad/hexapod-ws/src/hexapod/model"
+    "/home/emad/hexapod-ws/src/hexapod/rviz"
+    )
+endif()
+
+if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/ament_index/resource_index/package_run_dependencies" TYPE FILE FILES "/home/emad/hexapod-ws/build/hexapod/ament_cmake_index/share/ament_index/resource_index/package_run_dependencies/hexapod")
 endif()
 
