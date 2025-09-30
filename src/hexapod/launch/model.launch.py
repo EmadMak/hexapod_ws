@@ -4,15 +4,17 @@ from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
+import launch_ros
 from launch_ros.actions import Node
 import xacro
 
-def generate_launch_description():
-    robot_xacro_name = "hexapod_robot"
-    package_name = "hexapod"
-    model_file_relative_path = "model/robot.xacro"
-    rviz_file_relative_path = "rviz/config.rviz"
+robot_xacro_name = "hexapod_robot"
+package_name = "hexapod"
+model_file_relative_path = "model/robot.xacro"
+rviz_file_relative_path = "rviz/config.rviz"
+ros2_control_relative_path = "config/robot_controller.yaml"
 
+def generate_launch_description():
     path_model_file = os.path.join(
         get_package_share_directory(package_name), 
         model_file_relative_path
@@ -25,16 +27,39 @@ def generate_launch_description():
         rviz_file_relative_path
     )
 
+    path_ros2_control = os.path.join(
+        get_package_share_directory(package_name),
+        ros2_control_relative_path
+    )
+
+    gazebo = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [launch_ros.substitutions.FindPackageShare("ros_gz_sim"), "/launch/gz_sim.launch.py"]
+        ),
+        launch_arguments=[("gz_args", " -r -v 3 empty.sdf")]
+    )
+
+    gazebo_bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        arguments=["/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock"],
+        output="screen"
+    )
+
+    gz_spawn_entity = Node(
+        package="ros_gz_sim",
+        executable="create",
+        output="screen",
+        arguments=[
+            "-topic", "/robot_description",
+            "-name", "robot_system_position",
+            "-allow_renaming", "true"
+        ]
+    )
+
     node_robot_state_publisher = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
-        output="screen",
-        parameters=[{"robot_description": robot_description}]
-    )
-
-    node_joint_state_publisher = Node(
-        package="joint_state_publisher_gui",
-        executable="joint_state_publisher_gui",
         output="screen",
         parameters=[{"robot_description": robot_description}]
     )
@@ -46,10 +71,26 @@ def generate_launch_description():
         output="screen"
     )
 
+    joint_state_broadcaster = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["joint_state_broadcaster"]
+    )
+
+    robot_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["legs_controller", "--param-file", path_ros2_control]
+    )
+
     launch_description = LaunchDescription()
 
+    launch_description.add_action(gazebo)
+    launch_description.add_action(gazebo_bridge)
+    launch_description.add_action(gz_spawn_entity)
     launch_description.add_action(node_robot_state_publisher)
-    launch_description.add_action(node_joint_state_publisher)
     launch_description.add_action(launch_rviz2)
+    launch_description.add_action(joint_state_broadcaster)
+    launch_description.add_action(robot_controller_spawner)
 
     return launch_description

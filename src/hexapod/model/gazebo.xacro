@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<gazebo>
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>$(find hexapod)/config/robot_controller.yaml</parameters>
+    </plugin>
+</gazebo>
+
+<xacro:macro name="leg_links" params="name">
+    <gazebo reference="${name}_hip_link">
+        <mu1>0.2</mu1>
+        <mu2>0.2</mu2>
+        <material>Gazebo/Blue</material>
+    </gazebo>
+    <gazebo reference="${name}_femur_link">
+        <mu1>0.2</mu1>
+        <mu2>0.2</mu2>
+        <material>Gazebo/Blue</material>
+    </gazebo>
+    <gazebo reference="${name}_tibia_link">
+        <mu1>0.2</mu1>
+        <mu2>0.2</mu2>
+        <material>Gazebo/Blue</material>
+    </gazebo>
+</xacro:macro>
+
+<gazebo reference="body_link">
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <material>Gazebo/Blue</material>
+</gazebo>
+
+<xacro:leg_links name="rm"/>
+<xacro:leg_links name="ru"/>
+<xacro:leg_links name="rd"/>
+<xacro:leg_links name="lm"/>
+<xacro:leg_links name="lu"/>
+<xacro:leg_links name="ld"/>
+
+</robot>

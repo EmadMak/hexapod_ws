@@ -1,0 +1,34 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 200
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    legs_controller:
+      type: forward_command_controller/ForwardCommandController
+
+legs_controller:
+  ros__parameters:
+    joints:
+      - lm_hip_joint
+      - lm_femur_joint
+      - lm_tibia_joint
+      - lu_hip_joint
+      - lu_femur_joint
+      - lu_tibia_joint
+      - ld_hip_joint
+      - ld_femur_joint
+      - ld_tibia_joint
+      - ru_hip_joint
+      - ru_femur_joint
+      - ru_tibia_joint
+      - rd_hip_joint
+      - rd_femur_joint
+      - rd_tibia_joint
+      - rm_hip_joint
+      - rm_femur_joint
+      - rm_tibia_joint
+
+    interface_name: position
+  

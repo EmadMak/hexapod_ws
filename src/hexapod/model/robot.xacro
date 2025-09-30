@@ -2,6 +2,8 @@
 
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="hexapod_robot">
 
+<xacro:include filename="$(find hexapod)/model/gazebo.xacro" />
+
 <!-- Body dimensions -->
 <xacro:property name="r" value="0.075" />
 <xacro:property name="h" value="0.055" />
@@ -161,5 +163,42 @@
 <xacro:leg name="lm" hip_angle="${radians(180)}" direction="-1"/>
 <xacro:leg name="ld" hip_angle="${radians(225)}" direction="-1"/>
 <xacro:leg name="rd" hip_angle="${radians(315)}" direction="1"/>
+
+<xacro:macro name="leg_joints" params="name">
+    <joint name="${name}_hip_joint">
+        <command_interface name="position">
+            <param name="min">-1.571</param>
+            <param name="max">1.571</param>
+        </command_interface>
+        <state_interface name="position"/>
+    </joint>
+    <joint name="${name}_femur_joint">
+        <command_interface name="position">
+            <param name="min">-1.571</param>
+            <param name="max">1.571</param>
+        </command_interface>
+        <state_interface name="position"/>
+    </joint>
+    <joint name="${name}_tibia_joint">
+        <command_interface name="position">
+            <param name="min">-1.571</param>
+            <param name="max">1.571</param>
+        </command_interface>
+        <state_interface name="position"/>
+    </joint>
+</xacro:macro>
+
+<ros2_control name="RobotController" type="system">
+    <hardware>
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+
+    <xacro:leg_joints name="rm"/>
+    <xacro:leg_joints name="ru"/>
+    <xacro:leg_joints name="rd"/>
+    <xacro:leg_joints name="lm"/>
+    <xacro:leg_joints name="lu"/>
+    <xacro:leg_joints name="ld"/>
+</ros2_control>
 
 </robot>
