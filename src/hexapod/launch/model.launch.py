@@ -12,7 +12,9 @@ robot_xacro_name = "hexapod_robot"
 package_name = "hexapod"
 model_file_relative_path = "model/robot.xacro"
 rviz_file_relative_path = "rviz/config.rviz"
+world_relative_path = "worlds/empty.sdf"
 ros2_control_relative_path = "config/robot_controller.yaml"
+bridge_params_relative_path = "config/bridge_parameters.yaml"
 
 def generate_launch_description():
     path_model_file = os.path.join(
@@ -32,17 +34,27 @@ def generate_launch_description():
         ros2_control_relative_path
     )
 
+    world_path = os.path.join(
+        get_package_share_directory(package_name),
+        world_relative_path
+    )
+
+    bridge_params = os.path.join(
+        get_package_share_directory(package_name),
+        bridge_params_relative_path
+    )
+
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [launch_ros.substitutions.FindPackageShare("ros_gz_sim"), "/launch/gz_sim.launch.py"]
         ),
-        launch_arguments=[("gz_args", " -r -v 3 empty.sdf")]
+        launch_arguments=[("gz_args", f"-r -v4 {world_path}")]
     )
 
     gazebo_bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
-        arguments=["/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock"],
+        arguments=["/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock]"],
         output="screen"
     )
 
@@ -62,6 +74,17 @@ def generate_launch_description():
         executable="robot_state_publisher",
         output="screen",
         parameters=[{"robot_description": robot_description}]
+    )
+
+    gazebo_ros_bridge_node = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        arguments=[
+            "--ros-args",
+            "-p",
+            f"config_file:={bridge_params}"
+        ],
+        output="screen"
     )
 
     launch_rviz2 = Node(
@@ -89,6 +112,7 @@ def generate_launch_description():
     launch_description.add_action(gazebo_bridge)
     launch_description.add_action(gz_spawn_entity)
     launch_description.add_action(node_robot_state_publisher)
+    launch_description.add_action(gazebo_ros_bridge_node)
     launch_description.add_action(launch_rviz2)
     launch_description.add_action(joint_state_broadcaster)
     launch_description.add_action(robot_controller_spawner)

@@ -29,6 +29,12 @@
     <mu1>0.2</mu1>
     <mu2>0.2</mu2>
     <material>Gazebo/Blue</material>
+    <sensor name="imu_sensor" type="imu">
+        <always_on>1</always_on>
+        <update_rate>10</update_rate>
+        <visualize>true</visualize>
+        <topic>imu</topic>
+    </sensor>
 </gazebo>
 
 <xacro:leg_links name="rm"/>
