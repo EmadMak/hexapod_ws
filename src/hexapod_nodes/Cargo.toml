@@ -7,3 +7,9 @@ edition = "2021"
 
 [dependencies]
 rclrs = "0.5.1"
+
+[dependencies.sensor_msgs]
+version = "*"
+
+[dependencies.std_msgs]
+version = "*"
