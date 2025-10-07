@@ -10,6 +10,16 @@ fn main() -> Result<(), rclrs::RclrsError> {
     // let logger = node.logger();
     let mut count = 0;
 
+    // let _subscription = ik_node.create_subscription::<ImuMsg, _>(
+    //     "imu", 
+    //     move |msg: sensor_msgs::msg::Imu| {
+    //         println!("I heard {:?}", msg.orientation);
+    //     }
+    // )?;
+
+    // executor.spin(SpinOptions::default());
+    //Ok(())
+
     loop {
         let message = example_interfaces::msg::String {
             data: format!("Hello from Rust! Count: {}", count),
