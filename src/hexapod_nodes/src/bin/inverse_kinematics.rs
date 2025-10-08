@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use rclrs::*;
 use std_msgs::msg::Float64MultiArray;
@@ -8,13 +8,33 @@ const R_COXA: f64 = 0.022;
 const L_FEMUR: f64 = 0.07;
 const L_TIBIA: f64 = 0.0825;
 
-const STEP_PERIOD: f64 = 1.0;
+const STEP_PERIOD: f64 = 2.0;
 const BETA: f64 = 0.6;
 const CLEARANCE_HEIGHT: f64 = 0.05;
 const GROUND_HEIGHT: f64 = -0.0536;
-const DT: f64 = 0.01;
+const DT: f64 = 0.001;
 
-fn ik_solve(x: f64, y: f64, z: f64) -> Vec<f64> {
+enum Leg {
+    Lf, Lm, Lb,
+    Rf, Rm, Rb
+}
+
+impl Leg {
+    fn start_index(self) -> usize {
+        match self {
+            Leg::Lm => 0,
+            Leg::Lf => 3,
+            Leg::Lb => 6,
+            Leg::Rf => 9,
+            Leg::Rb => 12,
+            Leg::Rm => 15
+        }
+    }
+}
+
+type JointTriplet = [f64; 3];
+
+fn ik_leg(x: f64, y: f64, z: f64) -> JointTriplet {
     let theta_coxa = (y).atan2(x);
 
     let r = (x*x + y*y).sqrt();
@@ -28,61 +48,84 @@ fn ik_solve(x: f64, y: f64, z: f64) -> Vec<f64> {
 
     let theta_tibia = ((L_FEMUR.powi(2) + L_TIBIA.powi(2) - a.powi(2)) / (2.0 * L_FEMUR * L_TIBIA)).acos() - 90.0_f64.to_radians();
 
-    vec![theta_coxa, theta_femur, theta_tibia, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, theta_coxa, theta_femur, theta_tibia]
+    [theta_coxa, theta_femur, theta_tibia]
 }
 
-fn stance(phi: f64, x_touch: f64, x_lift: f64, y_touch: f64, y_lift: f64) -> Float64MultiArray {
+fn set_leg(buf: &mut [f64; 18], leg: Leg, joints: JointTriplet) {
+    let i = leg.start_index();
+    buf[i..i+3].copy_from_slice(&joints);
+}
+
+fn stance(phi: f64, x_touch: f64, x_lift: f64, y_touch: f64, y_lift: f64) -> [f64; 3] {
     let mut s = phi / BETA;
     s = 3.0*s.powi(2) - 2.0*s.powi(3);
 
-    Float64MultiArray {
-        layout: MultiArrayLayout::default(),
-        data: ik_solve(
-            x_touch + s * (x_lift - x_touch), 
-            y_touch + s * (y_lift - y_touch), 
-            GROUND_HEIGHT
-        )
-    }
+    [
+        x_touch + s * (x_lift - x_touch), 
+        y_touch + s * (y_lift - y_touch), 
+        GROUND_HEIGHT
+    ]
 }
 
-fn swing(phi: f64, x_touch: f64, x_lift: f64, y_touch: f64, y_lift: f64) -> Float64MultiArray {
+fn swing(phi: f64, x_touch: f64, x_lift: f64, y_touch: f64, y_lift: f64) -> [f64; 3] {
     let s = (1.0 - phi) / (1.0 - BETA);
     let psi = 10.0 * s.powi(3) - 15.0 * s.powi(4) + 6.0 * s.powi(5);
 
-    Float64MultiArray {
-        layout: MultiArrayLayout::default(),
-        data: ik_solve(
-            x_lift + psi * (x_touch - x_lift), 
-            y_lift + psi * (y_touch - y_lift), 
-            GROUND_HEIGHT + CLEARANCE_HEIGHT * 4.0*s*(1.0-s)
-        )
-    }
+    [
+        x_lift + psi * (x_touch - x_lift), 
+        y_lift + psi * (y_touch - y_lift), 
+        GROUND_HEIGHT + CLEARANCE_HEIGHT * 4.0*s*(1.0-s)
+    ]
 }
 
 fn main() -> Result<(), RclrsError> {
     let context = Context::default_from_env()?;
     let executor = context.create_basic_executor();
     let ik_node = executor.create_node("ik_node")?;
-
     let publisher = ik_node.create_publisher::<Float64MultiArray>("/legs_controller/commands")?;
 
-    let mut phi = 0.0;
+    let t0 = Instant::now();
+
+    let tick = Duration::from_secs_f64(DT);
+    let mut next_tick = t0 + tick;
+    let mut legs_buffer = [0.0; 18];
+    
     loop {
+        let t = t0.elapsed().as_secs_f64();
+
+        let mut phi = (t / STEP_PERIOD) % 1.0;
+
         if phi > 1.0 {
             phi = 0.0;
         };
 
-        let mut _message: Float64MultiArray;
-        
-        if phi <= BETA {
-            _message = stance(phi, 0.116, 0.116, 0.1, -0.1);
+        let leg_coords = if phi <= BETA {
+            stance(phi, 0.116, 0.116, 0.05, -0.05)
         } else {
-            _message = swing(phi, 0.116, 0.116, -0.1, 0.1);
-        }
+            swing(phi, 0.116, 0.116, -0.05, 0.05)
+        };
+
+        let joints = ik_leg(leg_coords[0], leg_coords[1], leg_coords[2]);
+        
+        set_leg(&mut legs_buffer, Leg::Lb, joints);
+        set_leg(&mut legs_buffer, Leg::Rm, joints);
+        set_leg(&mut legs_buffer, Leg::Lf, joints);
+        set_leg(&mut legs_buffer, Leg::Rb, joints);
+        set_leg(&mut legs_buffer, Leg::Lm, joints);
+        set_leg(&mut legs_buffer, Leg::Rf, joints); 
+
+        let _message = Float64MultiArray {
+            layout: MultiArrayLayout::default(),
+            data: legs_buffer.to_vec()
+        };
 
         publisher.publish(&_message)?;
-        std::thread::sleep(Duration::from_millis(100));
-        phi += DT;
+
+        let now = Instant::now();
+        if now < next_tick {
+            std::thread::sleep(next_tick - now);
+        }
+        next_tick += tick;
     }
 
 }
