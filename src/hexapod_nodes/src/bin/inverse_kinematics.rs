@@ -89,15 +89,14 @@ fn main() -> Result<(), RclrsError> {
     let tick = Duration::from_secs_f64(DT);
     let mut next_tick = t0 + tick;
     let mut legs_buffer = [0.0; 18];
+
+    let offset = 0.5;
     
     loop {
         let t = t0.elapsed().as_secs_f64();
 
-        let mut phi = (t / STEP_PERIOD) % 1.0;
-
-        if phi > 1.0 {
-            phi = 0.0;
-        };
+        let  phi = (t / STEP_PERIOD) % 1.0;
+        let phi2 = (phi + offset) % 1.0;
 
         let leg_coords = if phi <= BETA {
             stance(phi, 0.116, 0.116, 0.05, -0.05)
@@ -105,14 +104,21 @@ fn main() -> Result<(), RclrsError> {
             swing(phi, 0.116, 0.116, -0.05, 0.05)
         };
 
+        let other_leg_coords = if phi2 <= BETA {
+            stance(phi2, 0.116, 0.116, 0.05, -0.05)
+        } else {
+            swing(phi2, 0.116, 0.116, -0.05, 0.05)
+        };
+
         let joints = ik_leg(leg_coords[0], leg_coords[1], leg_coords[2]);
+        let other_joints = ik_leg(other_leg_coords[0], other_leg_coords[1], other_leg_coords[2]);
         
         set_leg(&mut legs_buffer, Leg::Lb, joints);
         set_leg(&mut legs_buffer, Leg::Rm, joints);
         set_leg(&mut legs_buffer, Leg::Lf, joints);
-        set_leg(&mut legs_buffer, Leg::Rb, joints);
-        set_leg(&mut legs_buffer, Leg::Lm, joints);
-        set_leg(&mut legs_buffer, Leg::Rf, joints); 
+        set_leg(&mut legs_buffer, Leg::Rb, other_joints);
+        set_leg(&mut legs_buffer, Leg::Lm, other_joints);
+        set_leg(&mut legs_buffer, Leg::Rf, other_joints); 
 
         let _message = Float64MultiArray {
             layout: MultiArrayLayout::default(),
